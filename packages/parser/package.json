@@ -1,0 +1,15 @@
+{
+  "name": "bililive-vibration-parser",
+  "description": "哔哩哔哩直播震动数据解析器",
+  "version": "1.0.0",
+  "author": "Akikaze Seiraku <akikaze@meowers.me>",
+  "license": "MIT",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "bin": "tsx src/bin.ts"
+  },
+  "dependencies": {
+    "mp4box": "^0.5.2"
+  }
+}

@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* See: https://github.com/nostalgic-css/NES.css/issues/509 */
+@media (-webkit-min-device-pixel-ratio: 0) and (min-resolution: 0.001dpcm) {
+  .nes-btn,
+  .nes-balloon,
+  .nes-select select {
+    border-image-repeat: stretch;
+  }
+}
+
+/* Credit: https://github.com/SolidZORO/zpix-pixel-font */
+@font-face {
+  font-family: 'Zpix-Subset';
+  src: url('zpix-subset.ttf') format('truetype');
+}
+
+body,
+code,
+html,
+kbd,
+pre,
+samp {
+  font-family: 'Zpix', 'Zpix-Subset', sans-serif;
+}
+
+body {
+  font-size: 18px;
+}
+
+a {
+  color: #007bff;
+}
