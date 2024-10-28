@@ -5,7 +5,9 @@ import { VibrationController } from './controller';
 import { LineChart } from './visualizer';
 
 function App() {
-  const [filename] = useState('vibration-segment-sample.mp4');
+  // See: https://muffinman.io/blog/hack-for-ios-safari-to-display-html-video-thumbnail/
+  const [filename] = useState('vibration-segment-sample.mp4#t=0.1');
+
   const [vibrationData, setVibrationData] = useState([]);
   const [debugData, setDebugData] = useState('');
 
@@ -65,6 +67,7 @@ function App() {
           ref={videoRef}
           controls
           src={filename}
+          preload="metadata"
           className="w-full sm:w-[48%]"
           onCanPlay={() => {
             if (videoRef.current) {
@@ -89,7 +92,7 @@ function App() {
         </div>
         <label className="nes-btn ml-8">
           <span>选择文件</span>
-          <input type="file" className="w-0 h-0" />
+          <input type="file" className="w-0 h-0 left-0 top-0" />
         </label>
       </section>
 
