@@ -12,20 +12,44 @@ export type VibrationData = {
 };
 
 /**
+ * 解析进度事件。
+ */
+export type ProgressEvent = {
+  timestamp: number;
+  duration: number;
+  current: number;
+  total: number;
+};
+
+/**
  * 解析 B 站直播视频流 SEI 中包含的震动数据。
  *
  * @param buffer 视频数据
+ * @param onProgress 解析进度回调
  * @returns 解析到的震动数据
  */
-export async function parseVibrationData(buffer: Buffer) {
+export async function parseVibrationData(
+  buffer: Buffer,
+  onProgress?: (progress: ProgressEvent) => void,
+) {
   const temp: VibrationData[] = [];
 
-  await parseSeiData(buffer, (data) => {
+  await parseSeiData(buffer, (data, progress) => {
     temp.push(data);
-    // console.log(JSON.stringify(data));
+    onProgress?.(progress);
   });
 
-  const sorted = temp.sort((a, b) => a.timestamp - b.timestamp);
+  return compressVibrationData(temp);
+}
+
+/**
+ * 压缩震动数据，去掉连续的空数据。
+ *
+ * @param data 震动数据
+ * @returns 压缩后的震动数据
+ */
+export function compressVibrationData(data: VibrationData[]) {
+  const sorted = data.slice().sort((a, b) => a.timestamp - b.timestamp);
   const filtered = [];
 
   for (let i = 0; i < sorted.length; i++) {
@@ -73,10 +97,13 @@ export async function parseVibrationData(buffer: Buffer) {
  * 解析 H.264 视频中的 SEI 数据。
  *
  * @param buffer 视频数据
- * @param onSeiMessage SEI 数据时的回调
+ * @param onSeiMessage 解析到 SEI 消息时的回调
  * @returns 解析后的 MP4Box 实例
  */
-export async function parseSeiData(buffer: Buffer, onSeiMessage: (data: VibrationData) => void) {
+export async function parseSeiData(
+  buffer: Buffer,
+  onSeiMessage: (data: VibrationData, progress: ProgressEvent) => void,
+) {
   const arrayBuffer = new Uint8Array(buffer).buffer as MP4ArrayBuffer;
   arrayBuffer.fileStart = 0;
 
@@ -111,7 +138,12 @@ export async function parseSeiData(buffer: Buffer, onSeiMessage: (data: Vibratio
       for (const sample of samples) {
         const vibrationData = processSampleData(sample);
         if (vibrationData) {
-          onSeiMessage(vibrationData);
+          onSeiMessage(vibrationData, {
+            timestamp: sample.cts / sample.timescale,
+            duration: sample.duration / sample.timescale,
+            current: trak.nextSample,
+            total: trak.samples.length,
+          });
         }
       }
 
@@ -134,7 +166,13 @@ export function setDebugMode(enabled: boolean) {
   Log.setLogLevel(enabled ? Log.debug : Log.error);
 }
 
-function processSampleData(sample: MP4Sample) {
+/**
+ * 处理每帧数据，解析出 SEI 消息。
+ *
+ * @param sample 帧数据
+ * @returns 解析到的震动数据
+ */
+export function processSampleData(sample: MP4Sample) {
   const data = sample.data;
   const dataUint8 = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
 

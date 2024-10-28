@@ -25,6 +25,26 @@ console.log(data);
 // ]
 ```
 
+以 Stream API 的方式使用：
+
+```javascript
+import { createReadStream } from 'fs';
+import { Readable } from 'stream';
+import { parseVibrationDataStream } from 'bililive-vibration-parser';
+
+const stream = parseVibrationDataStream((data, progress) => {
+  // data: { timestamp: 6238.65, vibrate: { l: 8666, r:8353 } }
+  // progress: { timestamp: 6238.65, duration: 0.017, current: 292436, total: 374324 }
+  console.log(data, progress);
+});
+
+const fileStream = Readable.toWeb(createReadStream('vibration-segment-sample.mp4'));
+
+fileStream.pipeTo(stream).then(() => {
+  console.log('done');
+});
+```
+
 命令行使用，为某个目录下的所有 `.mp4` 文件解析并生成震动数据 `.json`：
 
 ```bash
