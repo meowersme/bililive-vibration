@@ -65,11 +65,14 @@ export class GamepadVibrator extends Vibrator {
 
     window.addEventListener('gamepadconnected', this.onGamepadConnected);
     window.addEventListener('gamepaddisconnected', this.onGamepadDisconnected);
+    this.refreshGamepads();
   }
 
   public refreshGamepads() {
     this.gamepads = navigator.getGamepads().filter((gamepad) => gamepad !== null);
-    EE.emit('GAMEPAD_UPDATE', this.gamepads);
+    if (this.gamepads.length) {
+      EE.emit('GAMEPAD_UPDATE', this.gamepads);
+    }
   }
 
   protected vibrate(l: number, r: number) {

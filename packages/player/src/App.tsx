@@ -143,8 +143,8 @@ function App() {
   useEffect(() => {
     EE.on('GAMEPAD_UPDATE', (gamepads) => {
       const formatGamepad = (gp: Gamepad) =>
-        `ID: ${gp.id.slice(0, 20)}.., 支持震动: ${gp.vibrationActuator ? '是' : '否'}`;
-      setGamepads(`手柄已连接：\n${gamepads.map((gp) => formatGamepad(gp)).join('\n')}`);
+        `${gp.id.slice(0, 20)}.., 支持震动: ${gp.vibrationActuator ? '是' : '否'}`;
+      setGamepads(`手柄已连接: \n${gamepads.map((gp) => formatGamepad(gp)).join('\n')}`);
     });
   }, []);
 
@@ -312,7 +312,13 @@ function Manual() {
         <b>为什么点击测试震动后设备没有反应？</b>
       </p>
       <ul className="nes-list is-disc">
-        <li>不支持 iOS 浏览器。Android 请使用 Chrome 浏览器。</li>
+        <li>
+          如果是手柄：请尝试切换无线/有线连接/重新插拔，
+          <a href="https://hardwaretester.com/gamepad/" target="_blank">
+            点这里测试手柄。
+          </a>
+        </li>
+        <li>如果是手机：iOS 浏览器不支持震动，无解；Android 请使用 Chrome 浏览器。</li>
         <li>请检查手机设置中震动反馈是否已开启，并关闭勿扰模式/省电模式/静音模式等。</li>
         <li>
           当前浏览器是否支持 navigator.vibrate():{' '}
