@@ -6,7 +6,7 @@ import { LineChart } from './visualizer';
 
 function App() {
   // See: https://muffinman.io/blog/hack-for-ios-safari-to-display-html-video-thumbnail/
-  const [filename] = useState('vibration-segment-sample.mp4#t=0.1');
+  const [filename] = useState('vibration-segment-sample.mp4#t=0.2');
 
   const [vibrationData, setVibrationData] = useState([]);
   const [debugData, setDebugData] = useState('');
@@ -82,8 +82,8 @@ function App() {
 
       <section className="flex justify-center w-full mt-8">
         <div className="nes-select w-1/2">
-          <select required id="success_select">
-            <option value="" disabled selected hidden>
+          <select defaultValue="default">
+            <option value="default" disabled hidden>
               选择视频...
             </option>
             <option value="0">To be</option>
@@ -105,12 +105,12 @@ function App() {
 function Header() {
   return (
     <>
-      <h2 className="text-lg sm:text-2xl font-bold">
+      <h2 className="text-2xl font-bold text-center break-keep">
         <a href="#" className="mr-4">
           {'>>'}
         </a>
         BILIBILI 直播震动 录播播放器
-        <a href="#" className="ml-4">
+        <a href="#" className="ml-4 hidden sm:inline">
           {'<<'}
         </a>
       </h2>
@@ -123,7 +123,7 @@ function Header() {
 
 function Manual() {
   return (
-    <div className="nes-container with-title mt-8 px-6 sm:px-16">
+    <div className="nes-container with-title mt-8 px-6 sm:px-16 text-sm sm:text-base">
       <p className="title !-mt-9">常见问题</p>
       <p>
         <b>如何使用本站？</b>
