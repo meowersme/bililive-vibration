@@ -55,7 +55,7 @@ export class VibrationController {
     return data;
   }
 
-  private setVibratorState(l: number, r: number) {
+  public setVibratorState(l: number, r: number) {
     this.vibrators.forEach((vibrator) => {
       vibrator.setState(l, r);
     });

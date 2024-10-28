@@ -1,20 +1,31 @@
+import { VibrationData } from 'bililive-vibration-parser';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { EE } from './bus';
 import { VibrationController } from './controller';
 import { LineChart } from './visualizer';
+import manifest from './assets/manifest.json';
 
 function App() {
   // See: https://muffinman.io/blog/hack-for-ios-safari-to-display-html-video-thumbnail/
-  const [filename] = useState('vibration-segment-sample.mp4#t=0.2');
-
-  const [vibrationData, setVibrationData] = useState([]);
-  const [debugData, setDebugData] = useState('');
+  const [filename, setFilename] = useState('vibration-segment-sample.mp4#t=0.2');
+  const [vibrationData, setVibrationData] = useState<VibrationData[]>([]);
 
   const controllerRef = useRef<VibrationController | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [gamepads, setGamepads] = useState<string>('手柄未连接（请刷新页面并按手柄上任意按钮）');
+  const [debugData, setDebugData] = useState('');
+  const [vibrationTesting, setVibrationTesting] = useState(false);
+
+  const onSelectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if (value === 'default') {
+      return;
+    }
+
+    setFilename(value);
+  }, []);
 
   const load = useCallback(async () => {
     controllerRef.current?.destroy();
@@ -22,27 +33,39 @@ function App() {
     controllerRef.current = new VibrationController(videoRef.current!);
     const jsonUrl = filename.replace('.mp4', '.json');
     const response = await fetch(jsonUrl);
-    const data = await response.json();
-    console.log('vibration data', jsonUrl, data);
+    const data: VibrationData[] = await response.json();
     setVibrationData(data);
 
     const controller = controllerRef.current!;
     controller.clearVibrationData();
+
     setDebugData(`已解析震动数据长度: ${data.length}`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data.forEach((element: any) => {
+    data.forEach((element) => {
       controller.addVibrationData(element);
     });
   }, [filename]);
 
+  const testVibration = useCallback(() => {
+    setVibrationTesting(true);
+    controllerRef.current?.setVibratorState(65535, 65535);
+
+    setTimeout(() => {
+      setVibrationTesting(false);
+      controllerRef.current?.setVibratorState(0, 0);
+    }, 1000);
+  }, []);
+
   useEffect(() => {
-    load();
+    load().catch((error) => {
+      console.error(error);
+      setDebugData('震动数据加载失败');
+    });
   }, [load]);
 
   useEffect(() => {
     EE.on('GAMEPAD_UPDATE', (gamepads) => {
       const formatGamepad = (gp: Gamepad) =>
-        `ID: ${gp.id}, 支持震动: ${gp.vibrationActuator ? '是' : '否'}`;
+        `ID: ${gp.id.slice(0, 20)}.., 支持震动: ${gp.vibrationActuator ? '是' : '否'}`;
       setGamepads(`手柄已连接：\n${gamepads.map((gp) => formatGamepad(gp)).join('\n')}`);
     });
   }, []);
@@ -57,7 +80,11 @@ function App() {
           <br />
           <span>{debugData}</span>
         </div>
-        <button type="button" className="nes-btn is-success h-12 mb-[30px] ml-4 whitespace-nowrap">
+        <button
+          type="button"
+          className={`nes-btn is-success h-12 mb-[30px] ml-4 whitespace-nowrap ${vibrationTesting ? 'animate-bounce' : ''}`}
+          onClick={testVibration}
+        >
           点击测试震动
         </button>
       </div>
@@ -82,12 +109,15 @@ function App() {
 
       <section className="flex justify-center w-full mt-8">
         <div className="nes-select w-1/2">
-          <select defaultValue="default">
+          <select defaultValue="default" onChange={onSelectChange}>
             <option value="default" disabled hidden>
               选择视频...
             </option>
-            <option value="0">To be</option>
-            <option value="1">Not to be</option>
+            {manifest.map((item) => (
+              <option key={item.url} value={item.url}>
+                {item.name}
+              </option>
+            ))}
           </select>
         </div>
         <label className="nes-btn ml-8">
