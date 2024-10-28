@@ -70,9 +70,7 @@ export class GamepadVibrator extends Vibrator {
 
   public refreshGamepads() {
     this.gamepads = navigator.getGamepads().filter((gamepad) => gamepad !== null);
-    if (this.gamepads.length) {
-      EE.emit('GAMEPAD_UPDATE', this.gamepads);
-    }
+    EE.emit('GAMEPAD_UPDATE', this.gamepads);
   }
 
   protected vibrate(l: number, r: number) {

@@ -145,6 +145,11 @@ function App() {
 
   useEffect(() => {
     EE.on('GAMEPAD_UPDATE', (gamepads) => {
+      if (!gamepads.length) {
+        setGamepads('手柄未连接（请刷新页面并按手柄上任意按钮）');
+        return;
+      }
+
       const formatGamepad = (gp: Gamepad) =>
         `${gp.id.slice(0, 20)}.., 支持震动: ${gp.vibrationActuator ? '是' : '否'}`;
       setGamepads(`手柄已连接: \n${gamepads.map((gp) => formatGamepad(gp)).join('\n')}`);
