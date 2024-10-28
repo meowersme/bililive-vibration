@@ -6,9 +6,11 @@ import { VibrationController } from './controller';
 import { LineChart } from './visualizer';
 import manifest from './assets/manifest.json';
 
+const DEFAULT_VIDEO_URL = 'vibration-segment-sample.mp4#t=0.2';
+
 function App() {
   // See: https://muffinman.io/blog/hack-for-ios-safari-to-display-html-video-thumbnail/
-  const [filename, setFilename] = useState('vibration-segment-sample.mp4#t=0.2');
+  const [filename, setFilename] = useState(DEFAULT_VIDEO_URL);
   const [vibrationData, setVibrationData] = useState<VibrationData[]>([]);
 
   const controllerRef = useRef<VibrationController | null>(null);
@@ -21,15 +23,6 @@ function App() {
   const [gamepads, setGamepads] = useState<string>('手柄未连接（请刷新页面并按手柄上任意按钮）');
   const [debugData, setDebugData] = useState('');
   const [vibrationTesting, setVibrationTesting] = useState(false);
-
-  const onSelectChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    if (value === 'default') {
-      return;
-    }
-
-    setFilename(value);
-  }, []);
 
   const updateProgressBar = useCallback((percent: number, text: string) => {
     if (progressRef.current && progressTextRef.current) {
@@ -99,25 +92,32 @@ function App() {
     [processFile],
   );
 
-  const load = useCallback(async () => {
-    let data = controllerRef.current?.dumpVibrationStore() ?? [];
-
-    controllerRef.current?.destroy();
-    controllerRef.current = new VibrationController(videoRef.current!);
-
-    if (!filename.startsWith('blob:')) {
-      const jsonUrl = filename.replace('.mp4', '.json');
+  const loadFromUrl = useCallback(async (url: string) => {
+    try {
+      const jsonUrl = url.replace('.mp4', '.json');
       const response = await fetch(jsonUrl);
+      const data = await response.json();
       setVibrationData(data);
-      data = await response.json();
+      setDebugData(`已解析震动数据长度: ${data.length}`);
+      controllerRef.current?.initVibrationStore(data);
+    } catch (error) {
+      console.error(error);
+      setDebugData('震动数据加载失败: ' + (error as Error).message);
     }
+  }, []);
 
-    const controller = controllerRef.current!;
-    controller.clearVibrationData();
+  const onSelectChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const value = e.target.value;
+      if (value === 'default') {
+        return;
+      }
 
-    setDebugData(`已解析震动数据长度: ${data.length}`);
-    controller.initVibrationStore(data);
-  }, [filename]);
+      setFilename(value);
+      loadFromUrl(value);
+    },
+    [loadFromUrl],
+  );
 
   const onTestVibration = useCallback(() => {
     const controller = controllerRef.current;
@@ -137,13 +137,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    load().catch((error) => {
-      console.error(error);
-      setDebugData('震动数据加载失败: ' + error.message);
-    });
-  }, [load]);
-
-  useEffect(() => {
     EE.on('GAMEPAD_UPDATE', (gamepads) => {
       if (!gamepads.length) {
         setGamepads('手柄未连接（请刷新页面并按手柄上任意按钮）');
@@ -155,6 +148,11 @@ function App() {
       setGamepads(`手柄已连接: \n${gamepads.map((gp) => formatGamepad(gp)).join('\n')}`);
     });
   }, []);
+
+  useEffect(() => {
+    controllerRef.current = new VibrationController(videoRef.current!);
+    loadFromUrl(DEFAULT_VIDEO_URL);
+  }, [loadFromUrl]);
 
   return (
     <main className="flex items-center flex-col pt-8 mx-auto w-full sm:w-4/5 px-2">
