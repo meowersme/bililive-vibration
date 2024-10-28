@@ -1,14 +1,8 @@
-import { EE } from '../bus';
+import { EE, userInteractionDetected } from '../bus';
 
-let userGesture = false;
-const onUserGesture = () => {
-  userGesture = true;
-  window.removeEventListener('touchstart', onUserGesture);
-  window.removeEventListener('click', onUserGesture);
+const browserVibrateProxy = (value: number) => {
+  navigator.vibrate(value);
 };
-
-window.addEventListener('touchstart', onUserGesture);
-window.addEventListener('click', onUserGesture);
 
 /**
  * 震动器基类。
@@ -116,44 +110,45 @@ export class MobileVibrator extends Vibrator {
       this.lastValue = value;
       this.motorPercent = value / 65535;
 
-      if (!userGesture) {
+      if (!userInteractionDetected()) {
         return;
       }
 
       if (value > 0) {
         if (!this.vibrating) {
           this.vibrating = true;
-          this.doNavigatorVibrate();
+          this.run();
         }
       } else {
         this.vibrating = false;
-        window.navigator.vibrate(0);
+        browserVibrateProxy(0);
       }
     }
   }
 
-  private doNavigatorVibrate() {
-    if (!userGesture || !(this.lastValue > 0) || !this.vibrating) {
+  private run() {
+    if (!this.lastValue || this.lastValue < 0 || !this.vibrating) {
       return;
     }
 
+    // 浏览器震动 API 不支持控制强弱，只能通过频率来模拟
     if (this.motorPercent < 0.075) {
       const i = 100 - (this.motorPercent / 0.025) * 100;
-      window.navigator.vibrate(2);
+      browserVibrateProxy(2);
       setTimeout(() => {
-        this.doNavigatorVibrate();
+        this.run();
       }, i);
     } else if (this.motorPercent < 0.88) {
       const i = 50 * this.motorPercent;
-      window.navigator.vibrate(i);
+      browserVibrateProxy(i);
       setTimeout(() => {
-        this.doNavigatorVibrate();
+        this.run();
       }, i);
     } else {
       const i = 100 * this.motorPercent;
-      window.navigator.vibrate(i);
+      browserVibrateProxy(i);
       setTimeout(() => {
-        this.doNavigatorVibrate();
+        this.run();
       }, i);
     }
   }

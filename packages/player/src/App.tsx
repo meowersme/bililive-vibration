@@ -1,7 +1,7 @@
 import { parseVibrationDataStream, VibrationData } from 'bililive-vibration-parser';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { EE } from './bus';
+import { EE, userInteractionDetected } from './bus';
 import { VibrationController } from './controller';
 import { LineChart } from './visualizer';
 import manifest from './assets/manifest.json';
@@ -88,7 +88,7 @@ function App() {
         await processFile(file);
       } catch (error) {
         console.error(error);
-        setDebugData('震动数据解析失败');
+        setDebugData('震动数据解析失败: ' + (error as Error).message);
       }
     },
     [processFile],
@@ -136,7 +136,7 @@ function App() {
   useEffect(() => {
     load().catch((error) => {
       console.error(error);
-      setDebugData('震动数据加载失败');
+      setDebugData('震动数据加载失败: ' + error.message);
     });
   }, [load]);
 
@@ -247,6 +247,14 @@ function Header() {
 // pnpm run pyftsubset 字体子集字符预设
 // 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,?!-:;()[]{}"'&%$@#*+/
 function Manual() {
+  const [, setRerender] = useState(0);
+
+  useEffect(() => {
+    EE.on('USER_INTERACTION', () => {
+      setRerender((v) => v + 1);
+    });
+  }, []);
+
   return (
     <div className="nes-container with-title mt-8 px-6 sm:px-16 text-sm sm:text-base">
       <p className="title !-mt-9">常见问题</p>
@@ -290,7 +298,7 @@ function Manual() {
       </p>
       <ul className="nes-list is-disc">
         <li>推荐使用 PC/Mac 上的新版 Chrome 浏览器，兼容性最好。</li>
-        <li>也支持 Android 手机 Chrome 浏览器直接震动，但效果可能一般。</li>
+        <li>也支持 Android 手机 Chrome 浏览器直接震动，但效果一般（没有强弱区分）。</li>
         <li>
           因为苹果未开放网页震动权限，<b>不支持 iOS 浏览器震动。</b>
         </li>
@@ -308,7 +316,8 @@ function Manual() {
         <li>请检查手机设置中震动反馈是否已开启，并关闭勿扰模式/省电模式/静音模式等。</li>
         <li>
           当前浏览器是否支持 navigator.vibrate():{' '}
-          {typeof navigator.vibrate === 'function' ? '是' : '否'}
+          {typeof navigator.vibrate === 'function' ? '是' : '否'}，用户交互:{' '}
+          {userInteractionDetected() ? '是' : '否'}
         </li>
       </ul>
     </div>
