@@ -10,4 +10,13 @@ export default defineConfig({
       plugins: [tailwindcss()],
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          scichart: ['scichart'],
+        },
+      },
+    },
+  },
 });

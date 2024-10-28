@@ -8,6 +8,9 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   eslintPluginPrettierRecommended,
   {
+    ignores: ['packages/**/dist'],
+  },
+  {
     files: ['packages/**/*.ts', 'packages/**/*.tsx'],
   },
 );
