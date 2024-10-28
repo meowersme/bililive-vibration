@@ -69,6 +69,7 @@ function App() {
           setVibrationData(data);
           setDebugData(`已解析震动数据长度: ${data.length}`);
           updateProgressBar(100, `已解析震动数据 100%`);
+          controllerRef.current?.initVibrationStore(data);
         });
     },
     [updateProgressBar],
@@ -95,25 +96,23 @@ function App() {
   );
 
   const load = useCallback(async () => {
+    let data = controllerRef.current?.dumpVibrationStore() ?? [];
+
     controllerRef.current?.destroy();
     controllerRef.current = new VibrationController(videoRef.current!);
 
-    if (filename.startsWith('blob:')) {
-      return;
+    if (!filename.startsWith('blob:')) {
+      const jsonUrl = filename.replace('.mp4', '.json');
+      const response = await fetch(jsonUrl);
+      setVibrationData(data);
+      data = await response.json();
     }
-
-    const jsonUrl = filename.replace('.mp4', '.json');
-    const response = await fetch(jsonUrl);
-    const data: VibrationData[] = await response.json();
-    setVibrationData(data);
 
     const controller = controllerRef.current!;
     controller.clearVibrationData();
 
     setDebugData(`已解析震动数据长度: ${data.length}`);
-    data.forEach((element) => {
-      controller.addVibrationData(element);
-    });
+    controller.initVibrationStore(data);
   }, [filename]);
 
   const onTestVibration = useCallback(() => {

@@ -22,6 +22,14 @@ export class VibrationController {
     this.onAnimationFrame(0);
   }
 
+  public initVibrationStore(data: VibrationData[]) {
+    this.vibrationDataStore = data;
+  }
+
+  public dumpVibrationStore() {
+    return this.vibrationDataStore;
+  }
+
   public addVibrationData(data: VibrationData) {
     this.vibrationDataStore.push(data);
   }
@@ -84,11 +92,11 @@ export class VibrationController {
 
     const data = this.getVibrationData(currentTime);
     if (!data || !data.vibrate || data === this.lastPlayedData) {
-      // console.log("No Vibration Data", data, this.lastPlayedData);
+      // console.log('No Vibration Data', data, this.lastPlayedData);
       return;
     }
 
-    console.log('Vibration Data', data);
+    // console.log('Vibration Data', data);
     const diff = data.timestamp - currentTime;
 
     if (Math.abs(diff) <= 1) {
@@ -98,7 +106,7 @@ export class VibrationController {
       }, delay * 1000);
       this.lastPlayedData = data;
     } else {
-      console.warn('Vibration data is too far', diff);
+      // console.log('Vibration data is too far', diff);
     }
   }
 
