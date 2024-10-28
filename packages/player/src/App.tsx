@@ -137,7 +137,6 @@ function Manual() {
       <p>
         <b>如何自己切片并播放带震动的录播？</b>
       </p>
-      {/* <p>Good morning. Thou hast had a good night's sleep, I hope.</p> */}
       <ul className="nes-list is-disc">
         <li>
           准备一个未经处理过的直播录像（比如

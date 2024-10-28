@@ -1,7 +1,7 @@
 import { VibrationData } from 'bililive-vibration-parser';
 
 import { EE } from '../bus';
-import { Vibrator } from './vibrator';
+import { GamepadVibrator, MobileVibrator, Vibrator } from './vibrator';
 
 export class VibrationController {
   private videoElement: HTMLVideoElement | null = null;
@@ -12,11 +12,13 @@ export class VibrationController {
 
   private lastPlayedData: VibrationData | null = null;
 
-  public vibrator: Vibrator;
+  private playing = false;
+
+  private vibrators: Vibrator[] = [];
 
   constructor(videoElement: HTMLVideoElement) {
     this.videoElement = videoElement;
-    this.vibrator = new Vibrator();
+    this.vibrators = [new GamepadVibrator(), new MobileVibrator()];
     this.onAnimationFrame(0);
   }
 
@@ -28,7 +30,7 @@ export class VibrationController {
     this.vibrationDataStore = [];
   }
 
-  private popVibrationData(currentTime: number) {
+  private getVibrationData(currentTime: number) {
     if (!this.vibrationDataStore.length) {
       return;
     }
@@ -50,17 +52,20 @@ export class VibrationController {
     }
 
     const data = this.vibrationDataStore[index];
-    // this.vibrationDataStore.splice(0, index);
     return data;
   }
 
-  private playing = false;
+  private setVibratorState(l: number, r: number) {
+    this.vibrators.forEach((vibrator) => {
+      vibrator.setState(l, r);
+    });
+  }
 
   private onUpdateVibrate() {
     const video = this.videoElement;
     if (!video || video.paused || video.ended) {
       if (this.playing) {
-        this.vibrator.setState(0, 0);
+        this.setVibratorState(0, 0);
       }
 
       this.playing = false;
@@ -72,14 +77,12 @@ export class VibrationController {
     const currentTime = video.currentTime;
     const duration = video.duration;
     EE.emit('VIDEO_TIME_UPDATE', currentTime, duration);
-    console.log('Current Time', currentTime);
 
     if (this.lastPlayedData && currentTime - this.lastPlayedData.timestamp > 1) {
-      // this.webXInputSetState(0, 0)
-      this.vibrator.setState(0, 0);
+      this.setVibratorState(0, 0);
     }
 
-    const data = this.popVibrationData(currentTime);
+    const data = this.getVibrationData(currentTime);
     if (!data || !data.vibrate || data === this.lastPlayedData) {
       // console.log("No Vibration Data", data, this.lastPlayedData);
       return;
@@ -91,8 +94,7 @@ export class VibrationController {
     if (Math.abs(diff) <= 1) {
       const delay = Math.max(0, diff);
       setTimeout(() => {
-        // this.webXInputSetState(data.vibrate.l, data.vibrate.r)
-        this.vibrator.setState(data.vibrate.l, data.vibrate.r);
+        this.setVibratorState(data.vibrate.l, data.vibrate.r);
       }, delay * 1000);
       this.lastPlayedData = data;
     } else {
@@ -113,7 +115,9 @@ export class VibrationController {
   public destroy() {
     this.videoElement = null;
     this.vibrationDataStore = [];
-    this.vibrator.destroy();
+    this.vibrators.forEach((vibrator) => {
+      vibrator.destroy();
+    });
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
     }
