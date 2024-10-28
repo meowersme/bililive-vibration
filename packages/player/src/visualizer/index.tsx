@@ -6,7 +6,10 @@ import { SciChartReact, TResolvedReturnType } from 'scichart-react';
 import { EE } from '../bus';
 import { drawExample } from './draw';
 
-SciChartSurface.loadWasmFromCDN();
+SciChartSurface.configure({
+  dataUrl: `/assets/scichart2d-3.5.687.data`,
+  wasmUrl: `/assets/scichart2d-3.5.687.wasm`,
+});
 
 let globalDuration = 0;
 
