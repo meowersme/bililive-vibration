@@ -4,10 +4,16 @@
 
 /* See: https://github.com/nostalgic-css/NES.css/issues/509 */
 @media (-webkit-min-device-pixel-ratio: 0) and (min-resolution: 0.001dpcm) {
-  .nes-btn,
   .nes-balloon,
+  .nes-btn,
+  .nes-container.is-rounded,
+  .nes-dialog.is-rounded,
+  .nes-progress,
+  .nes-table.is-bordered,
+  .nes-input,
+  .nes-textarea,
   .nes-select select {
-    border-image-repeat: stretch;
+    border-image-repeat: stretch !important;
   }
 }
 
