@@ -285,6 +285,7 @@ function Manual() {
         <li>如果没有震动设备，也可以在视频旁边查看对应的震动可视化波形图。</li>
       </ul>
       <br />
+
       <p>
         <b>如何自己切片并播放带震动的录播？</b>
       </p>
@@ -307,7 +308,21 @@ function Manual() {
         <li>点击上方的「选择文件」按钮进行解析并播放。</li>
         <li>解析大于 1GB 的视频文件时浏览器卡住是正常的，等待即可。</li>
       </ul>
+      <br />
 
+      <p>
+        <b>视频加载太卡怎么办？</b>
+      </p>
+      <ul className="nes-list is-disc">
+        <li>服务器小水管，请见谅……开个科学会好很多。</li>
+        <li>
+          或者也可以直接从
+          <a href="https://pan.baidu.com/s/16K4MkPS69qD5Vo7Wy0lhRQ?pwd=1885" target="_blank">
+            百度网盘
+          </a>
+          下载切片然后本地播放（注意下载原画）。
+        </li>
+      </ul>
       <br />
 
       <p>
@@ -322,7 +337,6 @@ function Manual() {
         <li>推荐连接 Xbox 兼容手柄以获得最佳体验，不支持 PS5 手柄。</li>
         <li>手柄连接后按下任意按键才能被识别，点击上方绿色按钮可以测试震动。</li>
       </ul>
-
       <br />
 
       <p>
