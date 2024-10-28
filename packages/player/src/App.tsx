@@ -76,10 +76,14 @@ function App() {
   );
 
   const onFileUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
+    async (file: File | undefined) => {
       if (!file) {
-        setDebugData('选择文件为空');
+        alert('选择文件为空');
+        return;
+      }
+
+      if (!file.type.startsWith('video/mp4')) {
+        alert('请选择 MP4 格式的视频文件');
         return;
       }
 
@@ -198,9 +202,20 @@ function App() {
             ))}
           </select>
         </div>
-        <label className="nes-btn is-primary ml-8">
-          <span>选择文件</span>
-          <input type="file" className="w-0 h-0 left-0 top-0" onChange={onFileUpload} />
+        <label
+          className="nes-btn is-primary ml-8"
+          onDrop={(e) => {
+            e.preventDefault();
+            onFileUpload(e.dataTransfer.files[0]);
+          }}
+          onDragOver={(e) => e.preventDefault()}
+        >
+          <span>选择文件/拖拽</span>
+          <input
+            type="file"
+            className="w-0 h-0 left-0 top-0"
+            onChange={(e) => onFileUpload(e.target.files?.[0])}
+          />
         </label>
       </section>
 
