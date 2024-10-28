@@ -14,7 +14,7 @@
 /* Credit: https://github.com/SolidZORO/zpix-pixel-font */
 @font-face {
   font-family: 'Zpix-Subset';
-  src: url('zpix-subset.ttf') format('truetype');
+  src: url('./zpix-subset.ttf') format('truetype');
 }
 
 body,

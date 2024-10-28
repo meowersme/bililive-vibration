@@ -59,7 +59,7 @@ function App() {
           点击测试震动
         </button>
       </div>
-      <div className="flex flex-col sm:flex-row justify-between w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-center w-full">
         <video
           playsInline
           ref={videoRef}
