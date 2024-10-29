@@ -3,6 +3,9 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        pixel: ['Zpix', 'Zpix-Subset', 'sans-serif'],
+      },
       animation: {
         shake: 'shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97)',
       },

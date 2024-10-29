@@ -17,25 +17,14 @@
   }
 }
 
-/* Credit: https://github.com/SolidZORO/zpix-pixel-font */
-@font-face {
-  font-family: 'Zpix-Subset';
-  src: url('./zpix-subset.ttf') format('truetype');
-}
+@layer base {
+  /* Credit: https://github.com/SolidZORO/zpix-pixel-font */
+  @font-face {
+    font-family: 'Zpix-Subset';
+    src: url('./zpix-subset.ttf') format('truetype');
+  }
 
-body,
-code,
-html,
-kbd,
-pre,
-samp {
-  font-family: 'Zpix', 'Zpix-Subset', sans-serif;
-}
-
-body {
-  font-size: 18px;
-}
-
-a {
-  color: #007bff;
+  a {
+    color: #007bff;
+  }
 }

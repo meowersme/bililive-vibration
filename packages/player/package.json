@@ -10,7 +10,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "pyftsubset": "pyftsubset src/assets/zpix.ttf --output-file=src/assets/zpix-subset.ttf --text-file=src/App.tsx"
+    "pyftsubset": "pyftsubset src/assets/zpix.ttf --output-file=src/assets/zpix-subset.ttf --text-file=src/assets/charset.txt"
   },
   "dependencies": {
     "bililive-vibration-parser": "workspace:*",
