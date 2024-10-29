@@ -1,15 +1,17 @@
-import { parseVibrationDataStream, VibrationData } from 'bililive-vibration-parser';
+import { VibrationData } from 'bililive-vibration-parser';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { EE, userInteractionDetected } from './bus';
+import manifest from './assets/manifest.json';
+import { EE } from './bus';
+import { Footer, Header } from './components/Header';
+import { useParseVibration } from './components/hooks';
+import { Manual } from './components/Manual';
 import { VibrationController } from './controller';
 import { LineChart } from './visualizer';
-import manifest from './assets/manifest.json';
 
 const DEFAULT_VIDEO_URL = 'vibration-segment-sample.mp4#t=0.2';
 
 function App() {
-  // See: https://muffinman.io/blog/hack-for-ios-safari-to-display-html-video-thumbnail/
   const [filename, setFilename] = useState(DEFAULT_VIDEO_URL);
   const [vibrationData, setVibrationData] = useState<VibrationData[]>([]);
 
@@ -24,6 +26,9 @@ function App() {
   const [debugData, setDebugData] = useState('');
   const [vibrationTesting, setVibrationTesting] = useState(false);
 
+  /**
+   * 更新 UI 进度条。
+   */
   const updateProgressBar = useCallback((percent: number, text: string) => {
     if (progressRef.current && progressTextRef.current) {
       progressRef.current.value = percent;
@@ -31,51 +36,14 @@ function App() {
     }
   }, []);
 
-  const processFile = useCallback(
-    async (file: File) => {
-      let loaded = 0;
-      const fileLength = file.size;
+  const processFile = useParseVibration(updateProgressBar);
 
-      const progress = new TransformStream({
-        transform(chunk, controller) {
-          loaded += chunk.length;
-          controller.enqueue(chunk);
-
-          const percent = Math.floor((loaded / fileLength) * 100);
-          updateProgressBar(percent, `文件读取中 ${percent}%`);
-        },
-      });
-
-      const data: VibrationData[] = [];
-
-      const stream = parseVibrationDataStream((d, e) => {
-        data.push(d);
-        const percent = Math.floor((e.current / e.total) * 100);
-        updateProgressBar(percent, `已解析震动数据 ${percent}% (${e.current}/${e.total})`);
-      });
-
-      file
-        .stream()
-        .pipeThrough(progress)
-        .pipeTo(stream)
-        .then(() => {
-          setVibrationData(data);
-          setDebugData(`已解析震动数据长度: ${data.length}`);
-          updateProgressBar(100, `已解析震动数据 100%`);
-          controllerRef.current?.initVibrationStore(data);
-        });
-    },
-    [updateProgressBar],
-  );
-
-  const onFileUpload = useCallback(
+  /**
+   * 从文件中解析震动数据。
+   */
+  const loadFromFile = useCallback(
     async (file: File | undefined) => {
-      if (!file) {
-        alert('选择文件为空');
-        return;
-      }
-
-      if (!file.type.startsWith('video/mp4')) {
+      if (!file || !file.type.startsWith('video/mp4')) {
         alert('请选择 MP4 格式的视频文件');
         return;
       }
@@ -83,7 +51,11 @@ function App() {
       try {
         setShowProgress(true);
         setFilename(URL.createObjectURL(file));
-        await processFile(file);
+        const data = await processFile(file);
+
+        setVibrationData(data);
+        setDebugData(`已解析震动数据长度: ${data.length}`);
+        controllerRef.current?.initVibrationStore(data);
       } catch (error) {
         console.error(error);
         setDebugData('震动数据解析失败: ' + (error as Error).message);
@@ -92,11 +64,20 @@ function App() {
     [processFile],
   );
 
+  /**
+   * 从 URL 加载震动数据。
+   */
   const loadFromUrl = useCallback(async (url: string) => {
     try {
+      // Safari 上需要在 URL 后面加上 #t=0.1 才能显示视频缩略图
+      // See: https://muffinman.io/blog/hack-for-ios-safari-to-display-html-video-thumbnail/
+      setFilename(`${url}#t=0.1`);
+
+      // 默认加载同名的 JSON 文件
       const jsonUrl = url.replace('.mp4', '.json');
       const response = await fetch(jsonUrl);
       const data = await response.json();
+
       setVibrationData(data);
       setDebugData(`已解析震动数据长度: ${data.length}`);
       controllerRef.current?.initVibrationStore(data);
@@ -106,19 +87,9 @@ function App() {
     }
   }, []);
 
-  const onSelectChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const value = e.target.value;
-      if (value === 'default') {
-        return;
-      }
-
-      setFilename(value);
-      loadFromUrl(value);
-    },
-    [loadFromUrl],
-  );
-
+  /**
+   * 测试设备震动反馈。
+   */
   const onTestVibration = useCallback(() => {
     const controller = controllerRef.current;
     if (!controller) {
@@ -150,6 +121,7 @@ function App() {
   }, []);
 
   useEffect(() => {
+    controllerRef.current?.destroy();
     controllerRef.current = new VibrationController(videoRef.current!);
     loadFromUrl(DEFAULT_VIDEO_URL);
   }, [loadFromUrl]);
@@ -158,7 +130,7 @@ function App() {
     <main className="flex items-center flex-col pt-8 mx-auto w-full sm:w-4/5 px-2">
       <Header />
 
-      <div className="flex items-end flex-col sm:flex-row">
+      <div className="flex items-end flex-col sm:flex-row font-pixel">
         <div className="nes-balloon from-right">
           <span>{gamepads}</span>
           <br />
@@ -166,7 +138,7 @@ function App() {
         </div>
         <button
           type="button"
-          className={`nes-btn is-success h-12 mb-[30px] ml-4 whitespace-nowrap ${vibrationTesting ? 'animate-shake' : ''}`}
+          className={`nes-btn text-lg is-success h-12 mb-[30px] ml-4 whitespace-nowrap ${vibrationTesting ? 'animate-shake' : ''}`}
           onClick={onTestVibration}
         >
           点击测试震动
@@ -192,9 +164,16 @@ function App() {
         </div>
       </div>
 
-      <section className="flex justify-center w-full mt-8">
-        <div className="nes-select w-1/2">
-          <select defaultValue="default" onChange={onSelectChange}>
+      <section className="flex justify-center w-full mt-8 text-sm sm:text-lg font-pixel">
+        <div className="nes-select sm:w-1/2 grow sm:grow-0">
+          <select
+            defaultValue="default"
+            onChange={(e) => {
+              if (e.target.value !== 'default') {
+                loadFromUrl(e.target.value);
+              }
+            }}
+          >
             <option value="default" disabled hidden>
               选择视频...
             </option>
@@ -206,10 +185,10 @@ function App() {
           </select>
         </div>
         <label
-          className="nes-btn is-primary ml-8"
+          className="nes-btn is-primary ml-4 sm:ml-8 text-nowrap"
           onDrop={(e) => {
             e.preventDefault();
-            onFileUpload(e.dataTransfer.files[0]);
+            loadFromFile(e.dataTransfer.files[0]);
           }}
           onDragOver={(e) => e.preventDefault()}
         >
@@ -217,7 +196,7 @@ function App() {
           <input
             type="file"
             className="w-0 h-0 left-0 top-0"
-            onChange={(e) => onFileUpload(e.target.files?.[0])}
+            onChange={(e) => loadFromFile(e.target.files?.[0])}
           />
         </label>
       </section>
@@ -231,7 +210,7 @@ function App() {
           value="20"
           max="100"
         />
-        <span ref={progressTextRef} className="z-10">
+        <span ref={progressTextRef} className="z-10 font-pixel">
           解析器已就绪...
         </span>
       </div>
@@ -239,139 +218,6 @@ function App() {
       <Manual />
       <Footer />
     </main>
-  );
-}
-
-function Header() {
-  return (
-    <>
-      <h2 className="text-2xl font-bold text-center break-keep">
-        <a href="#" className="mr-4">
-          {'>>'}
-        </a>
-        BILIBILI 直播震动 录播播放器
-        <a href="#" className="ml-4 hidden sm:inline">
-          {'<<'}
-        </a>
-      </h2>
-      <p className="text-center mt-4 mb-4">
-        支持播放带震动数据的B站直播录播视频，并通过连接的手柄或手机同步震动反馈。
-      </p>
-    </>
-  );
-}
-
-// pnpm run pyftsubset 字体子集字符预设
-// 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,?!-:;()[]{}"'&%$@#*+/
-function Manual() {
-  const [, setRerender] = useState(0);
-
-  useEffect(() => {
-    EE.on('USER_INTERACTION', () => {
-      setRerender((v) => v + 1);
-    });
-  }, []);
-
-  return (
-    <div className="nes-container with-title mt-8 px-6 sm:px-16 text-sm sm:text-base">
-      <p className="title !-mt-9">常见问题</p>
-      <p>
-        <b>如何使用本站？</b>
-      </p>
-      <ul className="nes-list is-disc">
-        <li>连上手柄，点击上方的「选择视频」，可以直接播放一些准备好的直播片段。</li>
-        <li>如果你有想要重温的直播片段，也可以自己切片播放，或者联系我投稿。</li>
-        <li>震动数据直接从视频流中解析，理论上可以完全再现直播时的体验。</li>
-        <li>如果没有震动设备，也可以在视频旁边查看对应的震动可视化波形图。</li>
-      </ul>
-      <br />
-
-      <p>
-        <b>如何自己切片并播放带震动的录播？</b>
-      </p>
-      <ul className="nes-list is-disc">
-        <li>
-          准备一个未经处理过的直播录像（比如
-          <a href="https://rec.danmuji.org/" target="_blank">
-            录播姬
-          </a>
-          ），不可以是B站二压过的。
-        </li>
-        <li>
-          下载
-          <a href="https://mifi.no/losslesscut/" target="_blank">
-            {' LosslessCut '}
-          </a>
-          无损剪辑软件，不支持其他有损剪辑软件。
-        </li>
-        <li>将想要播放的片段切出来（最好不要太长，不然在线解析比较费时）。</li>
-        <li>点击上方的「选择文件」按钮进行解析并播放。</li>
-        <li>解析大于 1GB 的视频文件时浏览器卡住是正常的，等待即可。</li>
-      </ul>
-      <br />
-
-      <p>
-        <b>视频加载太卡怎么办？</b>
-      </p>
-      <ul className="nes-list is-disc">
-        <li>服务器小水管，请见谅……开个科学会好很多。</li>
-        <li>
-          或者也可以直接从
-          <a href="https://pan.baidu.com/s/16K4MkPS69qD5Vo7Wy0lhRQ?pwd=1885" target="_blank">
-            百度网盘
-          </a>
-          下载切片然后本地播放（注意下载原画）。
-        </li>
-      </ul>
-      <br />
-
-      <p>
-        <b>震动反馈的兼容性？</b>
-      </p>
-      <ul className="nes-list is-disc">
-        <li>推荐使用 PC/Mac 上的新版 Chrome 浏览器，兼容性最好。</li>
-        <li>也支持 Android 手机 Chrome 浏览器直接震动，但效果一般（没有强弱区分）。</li>
-        <li>
-          因为苹果未开放网页震动权限，<b>不支持 iOS 浏览器震动。</b>
-        </li>
-        <li>推荐连接 Xbox 兼容手柄以获得最佳体验，不支持 PS5 手柄。</li>
-        <li>手柄连接后按下任意按键才能被识别，点击上方绿色按钮可以测试震动。</li>
-      </ul>
-      <br />
-
-      <p>
-        <b>为什么点击测试震动后设备没有反应？</b>
-      </p>
-      <ul className="nes-list is-disc">
-        <li>
-          如果是手柄：请尝试切换无线/有线连接/重新插拔，
-          <a href="https://hardwaretester.com/gamepad/" target="_blank">
-            点这里测试手柄。
-          </a>
-        </li>
-        <li>如果是手机：iOS 浏览器不支持震动，无解；Android 请使用 Chrome 浏览器。</li>
-        <li>请检查手机设置中震动反馈是否已开启，并关闭勿扰模式/省电模式/静音模式等。</li>
-        <li>
-          当前浏览器是否支持 navigator.vibrate():{' '}
-          {typeof navigator.vibrate === 'function' ? '是' : '否'}，用户交互:{' '}
-          {userInteractionDetected() ? '是' : '否'}
-        </li>
-      </ul>
-    </div>
-  );
-}
-
-function Footer() {
-  return (
-    <p className="text-center mt-8 mb-8">
-      <a href="https://weibo.com/u/7917238293" target="_blank">
-        @秋風星落
-      </a>
-      {' | '}
-      <a href="https://github.com/meowersme/bililive-vibration" target="_blank">
-        GitHub
-      </a>
-    </p>
   );
 }
 

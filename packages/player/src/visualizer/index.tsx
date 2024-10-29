@@ -13,21 +13,17 @@ SciChartSurface.configure({
 
 let globalDuration = 0;
 
-export function LineChart({ data }: { data: VibrationData[] }) {
-  // return <div>{data.length}</div>;
+type ControlsHandle = TResolvedReturnType<typeof drawExample>['controls'];
 
-  const [controls, setControls] = useState<TResolvedReturnType<typeof drawExample>['controls']>(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    undefined as any,
-  );
+export function LineChart({ data }: { data: VibrationData[] }) {
+  const [controls, setControls] = useState<ControlsHandle | null>(null);
 
   useEffect(() => {
-    if (controls) {
-      controls.loadPoints(data);
-    }
+    // 当数据更新时，重新加载图表上的数据点
+    controls?.loadPoints(data);
 
+    // 当视频播放进度更新时，同步更新图表上的红色指示线
     const listener = (currentTime: number, duration: number) => {
-      // console.log("VIDEO_TIME_UPDATE", currentTime, duration, controls);
       globalDuration = duration;
       controls?.updateIndicator(currentTime, duration);
     };
@@ -40,18 +36,9 @@ export function LineChart({ data }: { data: VibrationData[] }) {
 
   return (
     <SciChartReact
-      // className={localClasses.chartArea}
       initChart={drawExample}
       onInit={({ controls }: TResolvedReturnType<typeof drawExample>) => {
         setControls(controls);
-        // const autoStartTimerId = setTimeout(
-        //   () => controls.loadPoints(data),
-        //   0
-        // );
-
-        // return () => {
-        //   clearTimeout(autoStartTimerId);
-        // };
         controls.updateIndicator(0, globalDuration);
       }}
     />
