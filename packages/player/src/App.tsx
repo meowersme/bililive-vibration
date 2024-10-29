@@ -9,7 +9,7 @@ import { Manual } from './components/Manual';
 import { VibrationController } from './controller';
 import { LineChart } from './visualizer';
 
-const DEFAULT_VIDEO_URL = 'vibration-segment-sample.mp4#t=0.2';
+const DEFAULT_VIDEO_URL = '/assets/vibration-segment-sample.mp4#t=0.2';
 
 function App() {
   const [filename, setFilename] = useState(DEFAULT_VIDEO_URL);

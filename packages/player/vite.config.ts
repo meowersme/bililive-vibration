@@ -22,6 +22,14 @@ export default defineConfig({
           dest: 'assets',
           rename: `scichart2d-${scichartVersion}.wasm`,
         },
+        {
+          src: 'src/assets/vibration-segment-sample.json',
+          dest: 'assets',
+        },
+        {
+          src: 'src/assets/vibration-segment-sample.mp4',
+          dest: 'assets',
+        },
       ],
     }),
   ],
