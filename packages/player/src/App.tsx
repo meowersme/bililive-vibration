@@ -71,7 +71,7 @@ function App() {
     try {
       // Safari 上需要在 URL 后面加上 #t=0.1 才能显示视频缩略图
       // See: https://muffinman.io/blog/hack-for-ios-safari-to-display-html-video-thumbnail/
-      setFilename(`${url}#t=0.1`);
+      setFilename(url.includes('#t') ? url : `${url}#t=0.1`);
 
       // 默认加载同名的 JSON 文件
       const jsonUrl = url.replace('.mp4', '.json');
