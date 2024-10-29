@@ -11,7 +11,7 @@ export function Manual() {
   }, []);
 
   return (
-    <div className="nes-container with-title w-full sm:w-auto mt-8 px-6 sm:px-16 text-sm sm:text-base [&>p>b]:font-pixel">
+    <div className="nes-container with-title w-full sm:w-auto mt-8 px-6 sm:px-16 text-sm sm:text-base font-sans [&>p>b]:font-pixel">
       <p className="title !-mt-9 font-pixel">常见问题</p>
       <p>
         <b>如何使用本站？</b>

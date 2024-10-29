@@ -19,7 +19,7 @@ export function Header() {
 
 export function Footer() {
   return (
-    <p className="text-center mt-8 mb-8 text-lg font-pixel">
+    <p className="text-center mt-8 mb-8 text-lg font-pixel text-nowrap">
       <a href="https://weibo.com/u/7917238293" target="_blank">
         @秋風星落
       </a>
